@@ -1,0 +1,183 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+
+namespace SchoolSearch
+{
+    class Student
+    {
+        public string LastName { get; set; }
+        public string FirstName { get; set; }
+        public int Grade { get; set; }
+        public int Classroom { get; set; }
+        public int Bus { get; set; }
+        public string TeacherLastName { get; set; }
+        public string TeacherFirstName { get; set; }
+    }
+
+    class Program
+    {
+        static List<Student> students = new List<Student>();
+
+        static void Main(string[] args)
+        {
+            if (!File.Exists("students.txt"))
+            {
+                Console.WriteLine("Файл students.txt не знайдено.");
+                return;
+            }
+
+            LoadData();
+
+            Console.WriteLine("SchoolSearch запущено. Введіть команду:");
+
+            while (true)
+            {
+                Console.Write("> ");
+                string input = Console.ReadLine();
+
+                if (input == null) continue;
+
+                if (input.StartsWith("Q"))
+                    break;
+
+                ProcessCommand(input);
+            }
+        }
+
+        static void LoadData()
+        {
+            foreach (var line in File.ReadAllLines("students.txt"))
+            {
+                var parts = line.Split(',');
+
+                students.Add(new Student
+                {
+                    LastName = parts[0],
+                    FirstName = parts[1],
+                    Grade = int.Parse(parts[2]),
+                    Classroom = int.Parse(parts[3]),
+                    Bus = int.Parse(parts[4]),
+                    TeacherLastName = parts[5],
+                    TeacherFirstName = parts[6]
+                });
+            }
+        }
+
+        static void ProcessCommand(string input)
+        {
+            Stopwatch sw = new Stopwatch();
+
+            if (input.StartsWith("S:"))
+            {
+                string lastName = input.Substring(2).Trim();
+
+                Console.WriteLine($"\nSearch by student last name: {lastName}");
+                sw.Start();
+
+                var result = students.Where(s => s.LastName == lastName).ToList();
+
+                sw.Stop();
+
+                if (result.Count == 0)
+                {
+                    Console.WriteLine("No students found with the specified last name.");
+                }
+                else
+                {
+                    foreach (var s in result)
+                    {
+                        Console.WriteLine($"Student {s.LastName} {s.FirstName} is in Grade {s.Grade}, Classroom {s.Classroom}. Teacher: {s.TeacherLastName} {s.TeacherFirstName}");
+                    }
+                }
+
+                Console.WriteLine($"Search time: {sw.ElapsedMilliseconds} ms\n");
+            }
+
+            else if (input.StartsWith("T:"))
+            {
+                string teacher = input.Substring(2).Trim();
+
+                Console.WriteLine($"\nSearch by teacher last name: {teacher}");
+                sw.Start();
+
+                var result = students.Where(s => s.TeacherLastName == teacher).ToList();
+
+                sw.Stop();
+
+                if (result.Count == 0)
+                {
+                    Console.WriteLine("No teacher found with the specified last name.");
+                }
+                else
+                {
+                    foreach (var s in result)
+                    {
+                        Console.WriteLine($"Teacher {teacher} teaches student {s.LastName} {s.FirstName}");
+                    }
+                }
+
+                Console.WriteLine($"Search time: {sw.ElapsedMilliseconds} ms\n");
+            }
+
+            else if (input.StartsWith("C:"))
+            {
+                int classroom = int.Parse(input.Substring(2).Trim());
+
+                Console.WriteLine($"\nSearch by classroom number: {classroom}");
+                sw.Start();
+
+                var result = students.Where(s => s.Classroom == classroom).ToList();
+
+                sw.Stop();
+
+                if (result.Count == 0)
+                {
+                    Console.WriteLine("No students found in the specified classroom.");
+                }
+                else
+                {
+                    foreach (var s in result)
+                    {
+                        Console.WriteLine($"Classroom {classroom}: {s.LastName} {s.FirstName}");
+                    }
+                }
+
+                Console.WriteLine($"Search time: {sw.ElapsedMilliseconds} ms\n");
+            }
+
+            else if (input.StartsWith("B:"))
+            {
+                int bus = int.Parse(input.Substring(2).Trim());
+
+                Console.WriteLine($"\nSearch by bus route number: {bus}");
+                sw.Start();
+
+                var result = students.Where(s => s.Bus == bus).ToList();
+
+                sw.Stop();
+
+                if (result.Count == 0)
+                {
+                    Console.WriteLine("No students found for the specified bus route.");
+                }
+                else
+                {
+                    foreach (var s in result)
+                    {
+                        Console.WriteLine($"Student {s.LastName} {s.FirstName} uses Bus {bus}, Grade {s.Grade}, Classroom {s.Classroom}");
+                    }
+                }
+
+                Console.WriteLine($"Search time: {sw.ElapsedMilliseconds} ms\n");
+            }
+
+            else
+            {
+                Console.WriteLine("Unknown command.\n");
+            }
+        }
+    }
+}
