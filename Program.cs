@@ -1,183 +1,251 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Diagnostics;
 
-namespace SchoolSearch
+class Program
 {
-    class Student
+    static void Main()
     {
-        public string LastName { get; set; }
-        public string FirstName { get; set; }
-        public int Grade { get; set; }
-        public int Classroom { get; set; }
-        public int Bus { get; set; }
-        public string TeacherLastName { get; set; }
-        public string TeacherFirstName { get; set; }
-    }
-
-    class Program
-    {
-        static List<Student> students = new List<Student>();
-
-        static void Main(string[] args)
+        while (true)
         {
-            if (!File.Exists("students.txt"))
+            Console.WriteLine("\n===== SCHOOL SEARCH SYSTEM =====");
+            Console.WriteLine("1 - Find student by last name");
+            Console.WriteLine("2 - Find students by classroom");
+            Console.WriteLine("3 - Find students by bus");
+            Console.WriteLine("4 - Find teacher by name");
+            Console.WriteLine("5 - Show students of a teacher");
+            Console.WriteLine("6 - Add new student");
+            Console.WriteLine("0 - Exit");
+
+            Console.Write("Choose option: ");
+            string choice = Console.ReadLine();
+
+            switch (choice)
             {
-                Console.WriteLine("Файл students.txt не знайдено.");
-                return;
-            }
-
-            LoadData();
-
-            Console.WriteLine("SchoolSearch запущено. Введіть команду:");
-
-            while (true)
-            {
-                Console.Write("> ");
-                string input = Console.ReadLine();
-
-                if (input == null) continue;
-
-                if (input.StartsWith("Q"))
+                case "1":
+                    FindStudentByLastName();
                     break;
 
-                ProcessCommand(input);
+                case "2":
+                    FindStudentsByClassroom();
+                    break;
+
+                case "3":
+                    FindStudentsByBus();
+                    break;
+
+                case "4":
+                    FindTeacherByName();
+                    break;
+
+                case "5":
+                    ShowStudentsOfTeacher();
+                    break;
+
+                case "6":
+                    AddStudent();
+                    break;
+
+                case "0":
+                    return;
             }
         }
+    }
 
-        static void LoadData()
+    static string FindTeacher(string classroom)
+    {
+        foreach (var line in File.ReadAllLines("teacher.txt"))
         {
-            foreach (var line in File.ReadAllLines("students.txt"))
-            {
-                var parts = line.Split(',');
+            var parts = line.Split(',').Select(p => p.Trim()).ToArray();
 
-                students.Add(new Student
-                {
-                    LastName = parts[0],
-                    FirstName = parts[1],
-                    Grade = int.Parse(parts[2]),
-                    Classroom = int.Parse(parts[3]),
-                    Bus = int.Parse(parts[4]),
-                    TeacherLastName = parts[5],
-                    TeacherFirstName = parts[6]
-                });
-            }
+            if (parts[2] == classroom)
+                return parts[0] + " " + parts[1];
         }
 
-        static void ProcessCommand(string input)
+        return "Unknown teacher";
+    }
+
+    static void FindStudentByLastName()
+    {
+        Console.Write("Enter student last name: ");
+        string name = Console.ReadLine().ToUpper();
+
+        var stopwatch = Stopwatch.StartNew();
+        bool found = false;
+
+        foreach (var line in File.ReadAllLines("list.txt"))
         {
-            Stopwatch sw = new Stopwatch();
+            var parts = line.Split(',').Select(p => p.Trim()).ToArray();
 
-            if (input.StartsWith("S:"))
+            if (parts[0].ToUpper() == name)
             {
-                string lastName = input.Substring(2).Trim();
+                string teacher = FindTeacher(parts[3]);
 
-                Console.WriteLine($"\nSearch by student last name: {lastName}");
-                sw.Start();
-
-                var result = students.Where(s => s.LastName == lastName).ToList();
-
-                sw.Stop();
-
-                if (result.Count == 0)
-                {
-                    Console.WriteLine("No students found with the specified last name.");
-                }
-                else
-                {
-                    foreach (var s in result)
-                    {
-                        Console.WriteLine($"Student {s.LastName} {s.FirstName} is in Grade {s.Grade}, Classroom {s.Classroom}. Teacher: {s.TeacherLastName} {s.TeacherFirstName}");
-                    }
-                }
-
-                Console.WriteLine($"Search time: {sw.ElapsedMilliseconds} ms\n");
-            }
-
-            else if (input.StartsWith("T:"))
-            {
-                string teacher = input.Substring(2).Trim();
-
-                Console.WriteLine($"\nSearch by teacher last name: {teacher}");
-                sw.Start();
-
-                var result = students.Where(s => s.TeacherLastName == teacher).ToList();
-
-                sw.Stop();
-
-                if (result.Count == 0)
-                {
-                    Console.WriteLine("No teacher found with the specified last name.");
-                }
-                else
-                {
-                    foreach (var s in result)
-                    {
-                        Console.WriteLine($"Teacher {teacher} teaches student {s.LastName} {s.FirstName}");
-                    }
-                }
-
-                Console.WriteLine($"Search time: {sw.ElapsedMilliseconds} ms\n");
-            }
-
-            else if (input.StartsWith("C:"))
-            {
-                int classroom = int.Parse(input.Substring(2).Trim());
-
-                Console.WriteLine($"\nSearch by classroom number: {classroom}");
-                sw.Start();
-
-                var result = students.Where(s => s.Classroom == classroom).ToList();
-
-                sw.Stop();
-
-                if (result.Count == 0)
-                {
-                    Console.WriteLine("No students found in the specified classroom.");
-                }
-                else
-                {
-                    foreach (var s in result)
-                    {
-                        Console.WriteLine($"Classroom {classroom}: {s.LastName} {s.FirstName}");
-                    }
-                }
-
-                Console.WriteLine($"Search time: {sw.ElapsedMilliseconds} ms\n");
-            }
-
-            else if (input.StartsWith("B:"))
-            {
-                int bus = int.Parse(input.Substring(2).Trim());
-
-                Console.WriteLine($"\nSearch by bus route number: {bus}");
-                sw.Start();
-
-                var result = students.Where(s => s.Bus == bus).ToList();
-
-                sw.Stop();
-
-                if (result.Count == 0)
-                {
-                    Console.WriteLine("No students found for the specified bus route.");
-                }
-                else
-                {
-                    foreach (var s in result)
-                    {
-                        Console.WriteLine($"Student {s.LastName} {s.FirstName} uses Bus {bus}, Grade {s.Grade}, Classroom {s.Classroom}");
-                    }
-                }
-
-                Console.WriteLine($"Search time: {sw.ElapsedMilliseconds} ms\n");
-            }
-
-            else
-            {
-                Console.WriteLine("Unknown command.\n");
+                Console.WriteLine($"\nStudent with last name {name} found:");
+                Console.WriteLine($"Name: {parts[1]} {parts[0]}");
+                Console.WriteLine($"Grade: {parts[2]}");
+                Console.WriteLine($"Classroom: {parts[3]}");
+                Console.WriteLine($"Bus: {parts[4]}");
+                Console.WriteLine($"Teacher: {teacher}");
+                found = true;
             }
         }
+
+        stopwatch.Stop();
+        Console.WriteLine($"{stopwatch.ElapsedMilliseconds}ms");
+
+        if (!found)
+            Console.WriteLine("Student not found.");
+    }
+
+    static void FindStudentsByClassroom()
+    {
+        Console.Write("Enter classroom: ");
+        string classroom = Console.ReadLine().Trim();
+
+        var stopwatch = Stopwatch.StartNew();
+        bool found = false;
+
+        Console.WriteLine($"\nStudents in classroom {classroom}:");
+
+        foreach (var line in File.ReadAllLines("list.txt"))
+        {
+            var parts = line.Split(',').Select(p => p.Trim()).ToArray();
+
+            if (parts[3] == classroom)
+            {
+                Console.WriteLine($"{parts[1]} {parts[0]}");
+                found = true;
+            }
+        }
+
+        string teacher = FindTeacher(classroom);
+        Console.WriteLine($"Teacher of classroom {classroom}: {teacher}");
+
+        stopwatch.Stop();
+        Console.WriteLine($"{stopwatch.ElapsedMilliseconds}ms");
+
+        if (!found)
+            Console.WriteLine("No students found in this classroom.");
+    }
+
+    static void FindStudentsByBus()
+    {
+        Console.Write("Enter bus number: ");
+        string bus = Console.ReadLine().Trim();
+
+        var stopwatch = Stopwatch.StartNew();
+        bool found = false;
+
+        Console.WriteLine($"\nStudents who ride bus {bus}:");
+
+        foreach (var line in File.ReadAllLines("list.txt"))
+        {
+            var parts = line.Split(',').Select(p => p.Trim()).ToArray();
+
+            if (parts[4] == bus)
+            {
+                Console.WriteLine($"{parts[1]} {parts[0]} (Classroom {parts[3]})");
+                found = true;
+            }
+        }
+
+        stopwatch.Stop();
+        Console.WriteLine($"{stopwatch.ElapsedMilliseconds}ms");
+
+        if (!found)
+            Console.WriteLine("No students found for this bus.");
+    }
+
+    static void FindTeacherByName()
+    {
+        Console.Write("Enter teacher last name: ");
+        string name = Console.ReadLine().ToUpper();
+
+        var stopwatch = Stopwatch.StartNew();
+        bool found = false;
+
+        foreach (var line in File.ReadAllLines("teacher.txt"))
+        {
+            var parts = line.Split(',').Select(p => p.Trim()).ToArray();
+
+            if (parts[0].ToUpper() == name)
+            {
+                Console.WriteLine($"\nTeacher {parts[1]} {parts[0]} teaches classroom {parts[2]}.");
+                found = true;
+                break;
+            }
+        }
+
+        stopwatch.Stop();
+        Console.WriteLine($"{stopwatch.ElapsedMilliseconds}ms");
+
+        if (!found)
+            Console.WriteLine("Teacher not found.");
+    }
+
+    static void ShowStudentsOfTeacher()
+    {
+        Console.Write("Enter teacher last name: ");
+        string name = Console.ReadLine().ToUpper();
+
+        var stopwatch = Stopwatch.StartNew();
+        bool found = false;
+
+        foreach (var teacherLine in File.ReadAllLines("teacher.txt"))
+        {
+            var t = teacherLine.Split(',').Select(p => p.Trim()).ToArray();
+
+            if (t[0].ToUpper() == name)
+            {
+                string classroom = t[2];
+
+                Console.WriteLine($"\nTeacher {t[1]} {t[0]} teaches the following students:");
+
+                foreach (var studentLine in File.ReadAllLines("list.txt"))
+                {
+                    var s = studentLine.Split(',').Select(p => p.Trim()).ToArray();
+
+                    if (s[3] == classroom)
+                        Console.WriteLine($"{s[1]} {s[0]}");
+                }
+
+                found = true;
+                break;
+            }
+        }
+
+        stopwatch.Stop();
+        Console.WriteLine($"{stopwatch.ElapsedMilliseconds}ms");
+
+        if (!found)
+            Console.WriteLine("Teacher not found.");
+    }
+
+    static void AddStudent()
+    {
+        Console.WriteLine("\nAdding a new student:");
+
+        Console.Write("Last Name: ");
+        string last = Console.ReadLine().ToUpper().Trim();
+
+        Console.Write("First Name: ");
+        string first = Console.ReadLine().ToUpper().Trim();
+
+        Console.Write("Grade: ");
+        string grade = Console.ReadLine().Trim();
+
+        Console.Write("Classroom: ");
+        string classroom = Console.ReadLine().Trim();
+
+        Console.Write("Bus: ");
+        string bus = Console.ReadLine().Trim();
+
+        string line = $"{last},{first},{grade},{classroom},{bus}";
+
+        File.AppendAllText("list.txt", line + Environment.NewLine);
+
+        Console.WriteLine("Student successfully added.");
     }
 }
